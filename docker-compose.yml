@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: foodhub
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: foodhub
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U foodhub"]
+      interval: 5s
+      retries: 10
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: Host=db;Database=foodhub;Username=foodhub;Password=${DB_PASSWORD}
+      Jwt__Key: ${JWT_KEY}
+    ports:
+      - "8080:8080"
+volumes:
+  dbdata:
