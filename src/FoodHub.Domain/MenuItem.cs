@@ -8,8 +8,10 @@ public class MenuItem
     public Money Price { get; private set; }
     public bool IsAvailable { get; private set; }
 
-    public MenuItem(Guid restaurantId, string name, Money price, bool isAvailable = true)
+    public MenuItem(Guid restaurantId, string name, Money price, bool isAvailable = true, Guid? id = null)
     {
+        if (id.HasValue && id.Value != Guid.Empty)
+            Id = id.Value;
         RestaurantId = restaurantId;
         Name = name;
         Price = price;

@@ -25,6 +25,7 @@ public class Order
     public Money ShippingFee { get; private set; } = Money.Zero;
     public Money DiscountAmount { get; private set; } = Money.Zero;
     public DateTime CreatedAtUtc { get; private set; } = DateTime.UtcNow;
+    public bool IsReviewed { get; private set; }
     public IReadOnlyList<OrderItem> Items => _items;
     public Money Subtotal => _items.Aggregate(Money.Zero, (sum, item) => sum + item.LineTotal);
     public Money Total => Subtotal + ShippingFee - DiscountAmount;
@@ -130,6 +131,68 @@ public class Order
     public void StartPreparing() => Transition(OrderStatus.Preparing);
     public void MarkReady() => Transition(OrderStatus.ReadyForPickup);
     public void MarkDelivered() => Transition(OrderStatus.Delivered);
+
+    public void MarkReviewed()
+    {
+        if (Status != OrderStatus.Delivered)
+            throw new DomainException("Only delivered orders can be reviewed.");
+        if (IsReviewed)
+            throw new DomainException("Order has already been reviewed.");
+
+        IsReviewed = true;
+    }
+
+    public Review AddReview(
+        Guid customerId,
+        int restaurantRating,
+        string? restaurantComment = null,
+        int? shipperRating = null,
+        string? shipperComment = null,
+        DateTime? utcNow = null)
+    {
+        return Review.Create(this, customerId, restaurantRating, restaurantComment, shipperRating, shipperComment, utcNow);
+    }
+
+    public static Order Restore(
+        Guid id,
+        Guid customerId,
+        Guid restaurantId,
+        OrderStatus status,
+        Guid? shipperId = null,
+        Address? deliveryAddress = null,
+        Money? shippingFee = null,
+        Money? discountAmount = null,
+        string? appliedVoucherCode = null,
+        bool isReviewed = false,
+        DateTime? createdAtUtc = null,
+        IEnumerable<OrderItem>? items = null)
+    {
+        if (id == Guid.Empty) throw new DomainException("Order id is required.");
+        if (customerId == Guid.Empty) throw new DomainException("Customer is required.");
+        if (restaurantId == Guid.Empty) throw new DomainException("Restaurant is required.");
+
+        var order = new Order
+        {
+            Id = id,
+            CustomerId = customerId,
+            RestaurantId = restaurantId,
+            Status = status,
+            ShipperId = shipperId,
+            DeliveryAddress = deliveryAddress,
+            ShippingFee = shippingFee ?? Money.Zero,
+            DiscountAmount = discountAmount ?? Money.Zero,
+            AppliedVoucherCode = appliedVoucherCode,
+            IsReviewed = isReviewed,
+            CreatedAtUtc = createdAtUtc ?? DateTime.UtcNow
+        };
+
+        if (items is not null)
+        {
+            order._items.AddRange(items);
+        }
+
+        return order;
+    }
 
     public void AssignShipper(Guid shipperId)
     {
