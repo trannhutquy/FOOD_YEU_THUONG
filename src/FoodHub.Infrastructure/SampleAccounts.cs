@@ -31,7 +31,7 @@ public static class SampleAccounts
         Email: "admin@foodhub.com",
         RawPassword: "AdminPassword123!",
         PasswordHash: DefaultHash,
-        FullName: "B",
+        FullName: "nguyễn văn B",
         Role: UserRole.Admin,
         PhoneNumber: "0901000001",
         Description: "Tài khoản quản trị toàn quyền hệ thống");
