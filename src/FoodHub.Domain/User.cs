@@ -1,8 +1,5 @@
 namespace FoodHub.Domain;
 
-/// <summary>
-/// Represents a user account in the system (Customer, Restaurant Owner, Shipper, Admin).
-/// </summary>
 public class User
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
@@ -32,11 +29,20 @@ public class User
         if (string.IsNullOrWhiteSpace(role))
             throw new DomainException("Role is required.");
 
+        var normalizedRole = UserRoles.ToName(UserRoles.Parse(role));
+
         Id = id ?? Guid.NewGuid();
         Email = email.Trim().ToLowerInvariant();
         PasswordHash = passwordHash;
         FullName = fullName.Trim();
-        Role = role.Trim();
+        Role = normalizedRole;
         PhoneNumber = string.IsNullOrWhiteSpace(phoneNumber) ? null : phoneNumber.Trim();
     }
+
+    public User(string email, string passwordHash, string fullName, UserRole role)
+        : this(email, passwordHash, fullName, UserRoles.ToName(role))
+    {
+    }
+
+    public UserRole RoleEnum => UserRoles.Parse(Role);
 }

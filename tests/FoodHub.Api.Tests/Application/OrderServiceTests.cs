@@ -1,5 +1,3 @@
-using FoodHub.Application.Abstractions;
-using FoodHub.Application.Common;
 using FoodHub.Application.Orders;
 using FoodHub.Domain;
 
@@ -7,27 +5,12 @@ namespace FoodHub.Api.Tests.Application;
 
 public class OrderServiceTests
 {
-    private sealed class FixedVoucherEvaluator(decimal amount) : IVoucherEvaluator
-    {
-        private sealed class FixedDiscount(decimal value) : IDiscountStrategy
-        {
-            public Money CalculateDiscount(Money subtotal, Money shippingFee) => new(value);
-        }
-
-        public Task<IDiscountStrategy> ResolveDiscountAsync(
-            Guid customerId,
-            string voucherCode,
-            Money subtotal,
-            CancellationToken cancellationToken = default)
-            => Task.FromResult<IDiscountStrategy>(new FixedDiscount(amount));
-    }
-
     private static readonly AddressDto DefaultAddress = new("12 Le Loi", "P1", "Cao Lanh", "Dong Thap");
 
     [Fact]
-    public async Task CreateOrder_WithValidItemsAndVoucher_ComputesTotalsAndSaves()
+    public async Task CreateOrder_WithValidItems_ComputesTotalsAndSaves()
     {
-        var harness = new InMemoryFoodHubHarness(new FixedVoucherEvaluator(10000));
+        var harness = new InMemoryFoodHubHarness();
         var ownerId = Guid.NewGuid();
         var customerId = Guid.NewGuid();
         var restaurant = new Restaurant("Com Tam", ownerId);
@@ -42,15 +25,12 @@ public class OrderServiceTests
                 restaurant.Id,
                 DefaultAddress,
                 new[] { new OrderItemRequest(item.Id, 2) },
-                VoucherCode: "GIAM10K",
                 ShippingFee: 15000));
 
         Assert.Equal(OrderStatus.Pending, result.Status);
         Assert.Equal(90000m, result.Subtotal);
         Assert.Equal(15000m, result.ShippingFee);
-        Assert.Equal(10000m, result.DiscountAmount);
-        Assert.Equal(95000m, result.Total);
-        Assert.Equal("GIAM10K", result.AppliedVoucherCode);
+        Assert.Equal(105000m, result.Total);
         Assert.Equal(1, harness.Store.SaveCount);
     }
 
@@ -146,9 +126,9 @@ public class OrderServiceTests
         await harness.OrderService.MarkReadyAsync(ownerId, created.Id);
         await harness.DeliveryService.PickUpOrderAsync(shipperUserId, created.Id);
 
-        var customerView = await harness.OrderService.GetOrderByIdAsync(customerId, UserRole.Customer, created.Id);
-        var shipperView = await harness.OrderService.GetOrderByIdAsync(shipperUserId, UserRole.Shipper, created.Id);
-        var ownerView = await harness.OrderService.GetOrderByIdAsync(ownerId, UserRole.RestaurantOwner, created.Id);
+        var customerView = await harness.OrderService.GetOrderByIdAsync(customerId, UserRoles.Customer, created.Id);
+        var shipperView = await harness.OrderService.GetOrderByIdAsync(shipperUserId, UserRoles.Shipper, created.Id);
+        var ownerView = await harness.OrderService.GetOrderByIdAsync(ownerId, UserRoles.RestaurantOwner, created.Id);
 
         Assert.NotNull(customerView.DeliveryConfirmationCode);
         Assert.Equal(6, customerView.DeliveryConfirmationCode!.Length);
@@ -156,6 +136,6 @@ public class OrderServiceTests
         Assert.Null(ownerView.DeliveryConfirmationCode);
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
-            harness.OrderService.GetOrderByIdAsync(Guid.NewGuid(), UserRole.Customer, created.Id));
+            harness.OrderService.GetOrderByIdAsync(Guid.NewGuid(), UserRoles.Customer, created.Id));
     }
 }

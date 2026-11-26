@@ -1,5 +1,4 @@
 using FoodHub.Application.Abstractions;
-using FoodHub.Application.Common;
 using FoodHub.Domain;
 
 namespace FoodHub.Application.Orders;
@@ -15,7 +14,6 @@ public class OrderService
     private readonly AutoAssignService _autoAssignService;
     private readonly IClock _clock;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IVoucherEvaluator? _voucherEvaluator;
 
     public OrderService(
         IOrderRepository orderRepository,
@@ -26,8 +24,7 @@ public class OrderService
         IDeliveryCodeProtector codeProtector,
         AutoAssignService autoAssignService,
         IClock clock,
-        IUnitOfWork unitOfWork,
-        IVoucherEvaluator? voucherEvaluator = null)
+        IUnitOfWork unitOfWork)
     {
         _orderRepository = orderRepository;
         _restaurantRepository = restaurantRepository;
@@ -38,7 +35,6 @@ public class OrderService
         _autoAssignService = autoAssignService;
         _clock = clock;
         _unitOfWork = unitOfWork;
-        _voucherEvaluator = voucherEvaluator;
     }
 
     public async Task<OrderDetailsDto> CreateOrderAsync(
@@ -74,20 +70,6 @@ public class OrderService
             order.AddItem(menuItem, itemReq.Quantity);
         }
 
-        if (!string.IsNullOrWhiteSpace(request.VoucherCode))
-        {
-            if (_voucherEvaluator is null)
-                throw new DomainException("Voucher service is not configured.");
-
-            var discountStrategy = await _voucherEvaluator.ResolveDiscountAsync(
-                customerId,
-                request.VoucherCode,
-                order.Subtotal,
-                cancellationToken);
-
-            order.ApplyDiscount(request.VoucherCode, discountStrategy);
-        }
-
         await _orderRepository.AddAsync(order, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -104,7 +86,7 @@ public class OrderService
         await EnsureCanViewOrderAsync(actorUserId, actorRole, order, cancellationToken);
 
         string? deliveryCode = null;
-        if (actorRole == UserRole.Customer &&
+        if (string.Equals(actorRole, UserRoles.Customer, StringComparison.OrdinalIgnoreCase) &&
             order.CustomerId == actorUserId &&
             order.Status == OrderStatus.Delivering)
         {
@@ -218,20 +200,21 @@ public class OrderService
         Order order,
         CancellationToken cancellationToken)
     {
-        if (actorRole == UserRole.Admin)
+        if (string.Equals(actorRole, UserRoles.Admin, StringComparison.OrdinalIgnoreCase))
             return;
 
-        if (actorRole == UserRole.Customer && order.CustomerId == actorUserId)
+        if (string.Equals(actorRole, UserRoles.Customer, StringComparison.OrdinalIgnoreCase) && order.CustomerId == actorUserId)
             return;
 
-        if (actorRole == UserRole.RestaurantOwner)
+        if (string.Equals(actorRole, UserRoles.Restaurant, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(actorRole, UserRoles.RestaurantOwner, StringComparison.OrdinalIgnoreCase))
         {
             var restaurant = await _restaurantRepository.GetByIdAsync(order.RestaurantId, cancellationToken);
             if (restaurant is not null && restaurant.OwnerUserId == actorUserId)
                 return;
         }
 
-        if (actorRole == UserRole.Shipper)
+        if (string.Equals(actorRole, UserRoles.Shipper, StringComparison.OrdinalIgnoreCase))
         {
             var shipper = await _shipperRepository.GetByUserIdAsync(actorUserId, cancellationToken);
             if (shipper is not null && order.ShipperId == shipper.Id)

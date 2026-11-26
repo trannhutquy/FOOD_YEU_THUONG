@@ -6,33 +6,53 @@ namespace FoodHub.Domain.Tests;
 public class UserTests
 {
     [Fact]
-    public void CreateUser_WithValidParameters_Succeeds()
+    public void Constructor_NormalizesEmailAndName()
     {
-        var id = Guid.NewGuid();
-        var user = new User(
-            "Thang@Example.com",
-            "hashed_pwd_123",
-            "Le Ha Huu Thang",
-            UserRole.Customer,
-            "0901234567",
-            id);
+        var user = new User("  Vy@Mail.COM ", "hash", "  Vy ", UserRole.Customer);
 
-        Assert.Equal(id, user.Id);
-        Assert.Equal("thang@example.com", user.Email); // lowercase normalized
-        Assert.Equal("hashed_pwd_123", user.PasswordHash);
-        Assert.Equal("Le Ha Huu Thang", user.FullName);
-        Assert.Equal(UserRole.Customer, user.Role);
-        Assert.Equal("0901234567", user.PhoneNumber);
+        Assert.Equal("vy@mail.com", user.Email);
+        Assert.Equal("Vy", user.FullName);
+        Assert.Equal(UserRoles.Customer, user.Role);
+        Assert.Equal(UserRole.Customer, user.RoleEnum);
     }
 
     [Theory]
-    [InlineData("", "pwd", "Name", "Role")]
-    [InlineData("email@a.com", "", "Name", "Role")]
-    [InlineData("email@a.com", "pwd", "", "Role")]
-    [InlineData("email@a.com", "pwd", "Name", "")]
-    public void CreateUser_WithEmptyRequiredFields_ThrowsDomainException(
-        string email, string pwd, string name, string role)
+    [InlineData("", "hash", "Vy")]
+    [InlineData("a@mail.com", "", "Vy")]
+    [InlineData("a@mail.com", "hash", " ")]
+    public void Constructor_MissingRequiredField_Throws(string email, string hash, string name)
     {
-        Assert.Throws<DomainException>(() => new User(email, pwd, name, role));
+        Assert.Throws<DomainException>(() => new User(email, hash, name, UserRole.Customer));
+    }
+}
+
+public class RefreshTokenTests
+{
+    [Fact]
+    public void Revoke_SetsRevokedAndReplacement()
+    {
+        var token = new RefreshToken(Guid.NewGuid(), "hash", DateTime.UtcNow.AddDays(7));
+        Assert.False(token.IsRevoked);
+
+        token.Revoke(DateTime.UtcNow, "new-hash");
+
+        Assert.True(token.IsRevoked);
+        Assert.Equal("new-hash", token.ReplacedByTokenHash);
+    }
+
+    [Fact]
+    public void IsExpired_DependsOnTime()
+    {
+        var now = DateTime.UtcNow;
+        var token = new RefreshToken(Guid.NewGuid(), "hash", now.AddMinutes(10));
+
+        Assert.False(token.IsExpired(now));
+        Assert.True(token.IsExpired(now.AddMinutes(10)));
+    }
+
+    [Fact]
+    public void Constructor_EmptyUser_Throws()
+    {
+        Assert.Throws<DomainException>(() => new RefreshToken(Guid.Empty, "hash", DateTime.UtcNow.AddDays(1)));
     }
 }

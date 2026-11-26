@@ -1,5 +1,4 @@
 using FoodHub.Application.Abstractions;
-using FoodHub.Application.Common;
 using FoodHub.Application.Orders;
 using FoodHub.Domain;
 
@@ -135,7 +134,6 @@ public class DeliveryService
         }
         catch (DomainException)
         {
-            // Persist incremented FailedAttempts / IsLocked state even when verification fails.
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             throw;
         }
@@ -154,9 +152,11 @@ public class DeliveryService
     {
         var order = await GetOrderOrThrowAsync(orderId, cancellationToken);
 
-        if (actorRole != UserRole.Admin)
+        if (!string.Equals(actorRole, UserRoles.Admin, StringComparison.OrdinalIgnoreCase))
         {
-            if (actorRole != UserRole.RestaurantOwner)
+            var isRestaurant = string.Equals(actorRole, UserRoles.Restaurant, StringComparison.OrdinalIgnoreCase) ||
+                               string.Equals(actorRole, UserRoles.RestaurantOwner, StringComparison.OrdinalIgnoreCase);
+            if (!isRestaurant)
                 throw new ForbiddenException("Only restaurant owners or admins can regenerate a delivery code.");
 
             var restaurant = await _restaurantRepository.GetByIdAsync(order.RestaurantId, cancellationToken)

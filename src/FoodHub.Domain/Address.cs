@@ -5,11 +5,13 @@ namespace FoodHub.Domain;
 /// </summary>
 public sealed record Address
 {
-    public string Street { get; }
-    public string Ward { get; }
-    public string District { get; }
-    public string City { get; }
-    public string? Note { get; }
+    public string Street { get; private set; } = string.Empty;
+    public string Ward { get; private set; } = string.Empty;
+    public string District { get; private set; } = string.Empty;
+    public string City { get; private set; } = string.Empty;
+    public string? Note { get; private set; }
+
+    private Address() { }
 
     public Address(string street, string ward, string district, string city, string? note = null)
     {

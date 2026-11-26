@@ -12,10 +12,10 @@ public class DataSeederTests
         var accounts = SampleAccounts.All;
 
         Assert.NotEmpty(accounts);
-        Assert.Contains(accounts, a => a.Role == UserRole.Admin);
-        Assert.Contains(accounts, a => a.Role == UserRole.RestaurantOwner);
-        Assert.Contains(accounts, a => a.Role == UserRole.Shipper);
-        Assert.Contains(accounts, a => a.Role == UserRole.Customer);
+        Assert.Contains(accounts, a => a.Role == UserRoles.Admin);
+        Assert.Contains(accounts, a => a.Role == UserRoles.RestaurantOwner);
+        Assert.Contains(accounts, a => a.Role == UserRoles.Shipper);
+        Assert.Contains(accounts, a => a.Role == UserRoles.Customer);
 
         // All IDs must be unique
         var uniqueIds = accounts.Select(a => a.Id).Distinct();

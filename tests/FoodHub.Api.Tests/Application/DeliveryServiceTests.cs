@@ -1,4 +1,3 @@
-using FoodHub.Application.Common;
 using FoodHub.Application.Deliveries;
 using FoodHub.Application.Orders;
 using FoodHub.Domain;
@@ -43,7 +42,7 @@ public class DeliveryServiceTests
         var pickupStatus = await harness.DeliveryService.PickUpOrderAsync(shipperUserId, orderId);
         Assert.Equal(OrderStatus.Delivering, pickupStatus.OrderStatus);
 
-        var customerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, UserRole.Customer, orderId);
+        var customerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, UserRoles.Customer, orderId);
         var code = customerOrder.DeliveryConfirmationCode!;
 
         var delivered = await harness.DeliveryService.ConfirmDeliveryAsync(
@@ -64,7 +63,7 @@ public class DeliveryServiceTests
         var (harness, ownerId, customerId, shipperUserId, orderId) = await SetupReadyOrderAsync();
         await harness.DeliveryService.PickUpOrderAsync(shipperUserId, orderId);
 
-        var customerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, UserRole.Customer, orderId);
+        var customerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, UserRoles.Customer, orderId);
         var wrongCode = customerOrder.DeliveryConfirmationCode == "000000" ? "999999" : "000000";
 
         var savesBefore = harness.Store.SaveCount;
@@ -76,11 +75,11 @@ public class DeliveryServiceTests
 
         Assert.Equal(savesBefore + DeliveryCode.MaxFailedAttempts, harness.Store.SaveCount);
 
-        var regenerated = await harness.DeliveryService.RegenerateCodeAsync(ownerId, UserRole.RestaurantOwner, orderId);
+        var regenerated = await harness.DeliveryService.RegenerateCodeAsync(ownerId, UserRoles.RestaurantOwner, orderId);
         Assert.False(regenerated.IsCodeLocked);
         Assert.Equal(0, regenerated.CodeFailedAttempts);
 
-        var refreshedCustomerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, UserRole.Customer, orderId);
+        var refreshedCustomerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, UserRoles.Customer, orderId);
         var delivered = await harness.DeliveryService.ConfirmDeliveryAsync(
             shipperUserId,
             orderId,

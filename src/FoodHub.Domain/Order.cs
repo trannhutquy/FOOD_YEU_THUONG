@@ -92,18 +92,16 @@ public class Order
         _items.Remove(existing);
     }
 
-    public void ApplyDiscount(string voucherCode, IDiscountStrategy discountStrategy)
+    public void ApplyDiscount(string voucherCode, Money discountAmount)
     {
         EnsurePending("Discount can only be applied while the order is pending.");
         if (string.IsNullOrWhiteSpace(voucherCode))
             throw new DomainException("Voucher code is required.");
         if (_items.Count == 0)
             throw new DomainException("Cannot apply discount to an empty order.");
-        ArgumentNullException.ThrowIfNull(discountStrategy);
 
-        var rawDiscount = discountStrategy.CalculateDiscount(Subtotal, ShippingFee);
         var maxDiscount = Subtotal + ShippingFee;
-        DiscountAmount = Money.Min(rawDiscount, maxDiscount);
+        DiscountAmount = Money.Min(discountAmount, maxDiscount);
         AppliedVoucherCode = voucherCode.Trim();
     }
 

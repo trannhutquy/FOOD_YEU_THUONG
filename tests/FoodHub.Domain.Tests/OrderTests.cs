@@ -5,16 +5,6 @@ namespace FoodHub.Domain.Tests;
 
 public class OrderTests
 {
-    private sealed class PercentageDiscountStrategy(decimal percent) : IDiscountStrategy
-    {
-        public Money CalculateDiscount(Money subtotal, Money shippingFee)
-            => new(Math.Round(subtotal.Amount * percent, 0));
-    }
-
-    private sealed class FreeShippingDiscountStrategy : IDiscountStrategy
-    {
-        public Money CalculateDiscount(Money subtotal, Money shippingFee) => shippingFee;
-    }
 
     private static (Restaurant, MenuItem) NewMenuItem(bool available = true)
     {
@@ -87,7 +77,7 @@ public class OrderTests
         var order = Order.Create(Guid.NewGuid(), restaurant, shippingFee: new Money(15000));
         order.AddItem(item, 1);
 
-        order.ApplyDiscount("VIP200", new PercentageDiscountStrategy(2.0m));
+        order.ApplyDiscount("VIP200", new Money(120000));
 
         Assert.Equal(60000m, order.DiscountAmount.Amount);
         Assert.Equal(0m, order.Total.Amount);
@@ -101,7 +91,7 @@ public class OrderTests
         var order = Order.Create(Guid.NewGuid(), restaurant, shippingFee: new Money(15000));
         order.AddItem(item, 1);
 
-        order.ApplyDiscount("FREESHIP", new FreeShippingDiscountStrategy());
+        order.ApplyDiscount("FREESHIP", new Money(15000));
 
         Assert.Equal(15000m, order.DiscountAmount.Amount);
         Assert.Equal(45000m, order.Total.Amount);

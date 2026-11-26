@@ -29,7 +29,7 @@ internal sealed class InMemoryFoodHubHarness
     public OrderService OrderService { get; }
     public DeliveryService DeliveryService { get; }
 
-    public InMemoryFoodHubHarness(IVoucherEvaluator? voucherEvaluator = null)
+    public InMemoryFoodHubHarness()
     {
         AutoAssign = new AutoAssignService(Store);
         OrderService = new OrderService(
@@ -41,8 +41,7 @@ internal sealed class InMemoryFoodHubHarness
             Protector,
             AutoAssign,
             Clock,
-            Store,
-            voucherEvaluator);
+            Store);
 
         DeliveryService = new DeliveryService(
             Store,
@@ -75,10 +74,32 @@ internal sealed class InMemoryStore :
     public void AddRestaurant(Restaurant restaurant) => _restaurants[restaurant.Id] = restaurant;
     public void AddMenuItem(MenuItem item) => _menuItems[item.Id] = item;
 
-    public Task<Restaurant?> GetByIdAsync(Guid restaurantId, CancellationToken cancellationToken = default)
-        => Task.FromResult(_restaurants.GetValueOrDefault(restaurantId));
+    public Task<Restaurant?> GetByIdAsync(Guid id, CancellationToken ct = default)
+        => Task.FromResult(_restaurants.GetValueOrDefault(id));
 
-    public Task<IReadOnlyList<MenuItem>> GetByIdsAsync(IEnumerable<Guid> menuItemIds, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<Restaurant>> GetAllAsync(CancellationToken ct = default)
+        => Task.FromResult<IReadOnlyList<Restaurant>>(_restaurants.Values.ToList());
+
+    public Task<Restaurant?> GetByOwnerUserIdAsync(Guid ownerUserId, CancellationToken ct = default)
+        => Task.FromResult(_restaurants.Values.FirstOrDefault(x => x.OwnerUserId == ownerUserId));
+
+    public Task AddAsync(Restaurant restaurant, CancellationToken ct = default)
+    {
+        _restaurants[restaurant.Id] = restaurant;
+        return Task.CompletedTask;
+    }
+
+    Task<MenuItem?> IMenuItemRepository.GetByIdAsync(Guid id, CancellationToken ct)
+        => Task.FromResult(_menuItems.GetValueOrDefault(id));
+
+    public Task<IReadOnlyList<MenuItem>> GetByRestaurantIdAsync(Guid restaurantId, bool availableOnly, CancellationToken ct = default)
+    {
+        var q = _menuItems.Values.Where(x => x.RestaurantId == restaurantId);
+        if (availableOnly) q = q.Where(x => x.IsAvailable);
+        return Task.FromResult<IReadOnlyList<MenuItem>>(q.ToList());
+    }
+
+    public Task<IReadOnlyList<MenuItem>> GetByIdsAsync(IEnumerable<Guid> menuItemIds, CancellationToken ct = default)
     {
         IReadOnlyList<MenuItem> result = menuItemIds
             .Where(_menuItems.ContainsKey)
@@ -86,6 +107,14 @@ internal sealed class InMemoryStore :
             .ToList();
         return Task.FromResult(result);
     }
+
+    Task IMenuItemRepository.AddAsync(MenuItem item, CancellationToken ct)
+    {
+        _menuItems[item.Id] = item;
+        return Task.CompletedTask;
+    }
+
+    public void Remove(MenuItem item) => _menuItems.Remove(item.Id);
 
     Task<Order?> IOrderRepository.GetByIdAsync(Guid orderId, CancellationToken cancellationToken)
         => Task.FromResult(_orders.GetValueOrDefault(orderId));
@@ -141,7 +170,13 @@ internal sealed class InMemoryStore :
         return Task.CompletedTask;
     }
 
-    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    public Task<int> SaveChangesAsync(CancellationToken ct = default)
+    {
+        SaveCount++;
+        return Task.FromResult(1);
+    }
+
+    Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken, bool _)
     {
         SaveCount++;
         return Task.CompletedTask;
