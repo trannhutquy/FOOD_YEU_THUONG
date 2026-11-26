@@ -6,16 +6,30 @@ public class Restaurant
     public string Name { get; private set; }
     public Guid OwnerUserId { get; private set; }
     public bool IsOpen { get; private set; }
-    public string? Address { get; private set; }
 
-    public Restaurant(string name, Guid ownerUserId, bool isOpen = true, string? address = null, Guid? id = null)
+    private Restaurant()
     {
-        if (id.HasValue && id.Value != Guid.Empty)
-            Id = id.Value;
-        Name = name;
+        Name = null!;
+    }
+
+    public Restaurant(string name, Guid ownerUserId, bool isOpen = true)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new DomainException("Restaurant name is required.");
+        if (ownerUserId == Guid.Empty)
+            throw new DomainException("Owner user is required.");
+
+        Name = name.Trim();
         OwnerUserId = ownerUserId;
         IsOpen = isOpen;
-        Address = address;
+    }
+
+    public void Rename(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new DomainException("Restaurant name is required.");
+
+        Name = name.Trim();
     }
 
     public void SetOpen(bool isOpen) => IsOpen = isOpen;

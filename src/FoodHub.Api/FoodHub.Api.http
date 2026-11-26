@@ -1,6 +1,61 @@
-@FoodHub.Api_HostAddress = http://localhost:5037
+@host = http://localhost:5037
 
-GET {{FoodHub.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### 1. Đăng ký khách
+POST {{host}}/api/auth/register
+Content-Type: application/json
 
-###
+{ "email": "khach@mail.com", "password": "matkhau123", "fullName": "Khách A", "role": "Customer" }
+
+### 2. Đăng ký chủ quán (bắt buộc restaurantName)
+# @name registerOwner
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{ "email": "quan@mail.com", "password": "matkhau123", "fullName": "Chủ quán B", "role": "Restaurant", "restaurantName": "Phở Hà Nội" }
+
+### 3. Đăng ký shipper
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{ "email": "ship@mail.com", "password": "matkhau123", "fullName": "Shipper C", "role": "Shipper" }
+
+### 4. Đăng ký Admin -> phải 403
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{ "email": "admin@mail.com", "password": "matkhau123", "fullName": "Admin", "role": "Admin" }
+
+### 5. Đăng nhập
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{ "email": "khach@mail.com", "password": "matkhau123" }
+
+### 6. Xem tôi là ai (dán accessToken vào đây)
+GET {{host}}/api/auth/me
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### 7. Làm mới token
+POST {{host}}/api/auth/refresh
+Content-Type: application/json
+
+{ "refreshToken": "{{login.response.body.refreshToken}}" }
+
+### 8. Danh sách quán ăn (công khai)
+# @name restaurants
+GET {{host}}/api/restaurants
+
+### 9. Thêm món vào quán (dùng token chủ quán)
+POST {{host}}/api/restaurants/{{restaurants.response.body.$[0].id}}/menu
+Authorization: Bearer {{registerOwner.response.body.accessToken}}
+Content-Type: application/json
+
+{ "name": "Phở bò tái", "price": 45000, "isAvailable": true }
+
+### 10. Xem thực đơn công khai của quán
+GET {{host}}/api/restaurants/{{restaurants.response.body.$[0].id}}/menu
+
+### 11. Khách kiểm tra voucher (cần Admin tạo voucher trước)
+GET {{host}}/api/vouchers/validate?code=SALE10&subtotal=100000&shippingFee=15000
+Authorization: Bearer {{login.response.body.accessToken}}

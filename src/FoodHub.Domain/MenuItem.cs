@@ -8,13 +8,41 @@ public class MenuItem
     public Money Price { get; private set; }
     public bool IsAvailable { get; private set; }
 
-    public MenuItem(Guid restaurantId, string name, Money price, bool isAvailable = true, Guid? id = null)
+    private MenuItem()
     {
-        if (id.HasValue && id.Value != Guid.Empty)
-            Id = id.Value;
+        Name = null!;
+    }
+
+    public MenuItem(Guid restaurantId, string name, Money price, bool isAvailable = true)
+    {
+        if (restaurantId == Guid.Empty)
+            throw new DomainException("Restaurant is required.");
+        if (string.IsNullOrWhiteSpace(name))
+            throw new DomainException("Menu item name is required.");
+        if (price.Amount <= 0)
+            throw new DomainException("Menu item price must be greater than zero.");
+
         RestaurantId = restaurantId;
-        Name = name;
+        Name = name.Trim();
         Price = price;
         IsAvailable = isAvailable;
     }
+
+    public void Rename(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new DomainException("Menu item name is required.");
+
+        Name = name.Trim();
+    }
+
+    public void ChangePrice(Money price)
+    {
+        if (price.Amount <= 0)
+            throw new DomainException("Menu item price must be greater than zero.");
+
+        Price = price;
+    }
+
+    public void SetAvailability(bool isAvailable) => IsAvailable = isAvailable;
 }
