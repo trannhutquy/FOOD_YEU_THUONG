@@ -12,7 +12,8 @@ public class UserTests
 
         Assert.Equal("vy@mail.com", user.Email);
         Assert.Equal("Vy", user.FullName);
-        Assert.Equal(UserRole.Customer, user.Role);
+        Assert.Equal(UserRoles.Customer, user.Role);
+        Assert.Equal(UserRole.Customer, user.RoleEnum);
     }
 
     [Theory]

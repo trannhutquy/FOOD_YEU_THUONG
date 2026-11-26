@@ -6,7 +6,6 @@ using FoodHub.Api.Middleware;
 using FoodHub.Application.Abstractions;
 using FoodHub.Application.Auth;
 using FoodHub.Application.Restaurants;
-using FoodHub.Application.Vouchers;
 using FoodHub.Infrastructure.Auth;
 using FoodHub.Infrastructure.Persistence;
 using FoodHub.Infrastructure.Persistence.Repositories;
@@ -17,12 +16,10 @@ using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ---- Cấu hình JWT (Key lấy từ biến môi trường Jwt__Key) ----
 var jwt = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
 if (string.IsNullOrWhiteSpace(jwt.Key) || jwt.Key.Length < 32)
     throw new InvalidOperationException("Jwt:Key must be set (environment variable Jwt__Key) and be at least 32 characters.");
 
-// ---- Dịch vụ ----
 builder.Services.AddControllers()
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
@@ -71,18 +68,16 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();
 builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
-builder.Services.AddScoped<IVoucherRepository, VoucherRepository>();
 builder.Services.AddScoped<IShipperRepository, ShipperRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRestaurantService, RestaurantService>();
 builder.Services.AddScoped<IMenuItemService, MenuItemService>();
-builder.Services.AddScoped<IVoucherService, VoucherService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.MapInboundClaims = false;   // giữ nguyên tên claim "sub", "role"
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -94,13 +89,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromSeconds(30),
             NameClaimType = "sub",
-            RoleClaimType = "role"          // để [Authorize(Roles = "...")] đọc đúng claim
+            RoleClaimType = "role"
         };
     });
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("CustomerOnly", policy => policy.RequireRole("Customer"));
-    options.AddPolicy("RestaurantOnly", policy => policy.RequireRole("Restaurant"));
+    options.AddPolicy("RestaurantOnly", policy => policy.RequireRole("Restaurant", "RestaurantOwner"));
     options.AddPolicy("ShipperOnly", policy => policy.RequireRole("Shipper"));
     options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
 });
@@ -119,7 +114,6 @@ if (app.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swa
     });
 }
 
-// Thứ tự bắt buộc: xác thực trước, phân quyền sau
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -127,5 +121,4 @@ app.MapControllers();
 
 app.Run();
 
-// Cần cho WebApplicationFactory trong kiểm thử API
 public partial class Program { }

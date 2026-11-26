@@ -17,7 +17,7 @@ Dùng nút **Authorize** trên Swagger UI và dán **Access Token** (JWT) nhận
    $env:Jwt__Key = "<JWT_KEY_AT_LEAST_32_CHARS>"
    dotnet ef database update -p src/FoodHub.Infrastructure -s src/FoodHub.Api
    ```
-3. Tài liệu thiết kế CSDL phần xác thực, quán/menu và voucher: [docs/er-draft.md](docs/er-draft.md) và [docs/schema.sql](docs/schema.sql).
+3. Tài liệu thiết kế CSDL phần xác thực, quán/menu: [docs/er-draft.md](docs/er-draft.md).
 
 ## Build & Kiểm thử tự động
 ```powershell

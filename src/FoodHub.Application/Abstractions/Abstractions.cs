@@ -2,9 +2,21 @@ using FoodHub.Domain;
 
 namespace FoodHub.Application.Abstractions;
 
+public interface IClock
+{
+    DateTime UtcNow { get; }
+}
+
+public interface IDeliveryCodeProtector
+{
+    string Protect(string plainCode);
+    string Unprotect(string protectedCode);
+}
+
 public interface IUnitOfWork
 {
     Task<int> SaveChangesAsync(CancellationToken ct = default);
+    Task SaveChangesAsync(CancellationToken cancellationToken, bool _ = false);
 }
 
 public interface IPasswordHasher
@@ -54,20 +66,26 @@ public interface IMenuItemRepository
 {
     Task<MenuItem?> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<IReadOnlyList<MenuItem>> GetByRestaurantIdAsync(Guid restaurantId, bool availableOnly, CancellationToken ct = default);
+    Task<IReadOnlyList<MenuItem>> GetByIdsAsync(IEnumerable<Guid> menuItemIds, CancellationToken ct = default);
     Task AddAsync(MenuItem item, CancellationToken ct = default);
     void Remove(MenuItem item);
 }
 
-public interface IVoucherRepository
+public interface IOrderRepository
 {
-    Task<Voucher?> GetByCodeAsync(string code, CancellationToken ct = default);
-    Task<bool> ExistsByCodeAsync(string code, CancellationToken ct = default);
-    Task<IReadOnlyList<Voucher>> GetAllAsync(CancellationToken ct = default);
-    Task AddAsync(Voucher voucher, CancellationToken ct = default);
+    Task<Order?> GetByIdAsync(Guid orderId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Order>> GetAvailableForDeliveryAsync(CancellationToken cancellationToken = default);
+    Task AddAsync(Order order, CancellationToken cancellationToken = default);
 }
 
-// Chỉ để TẠO Shipper lúc đăng ký. Việc nhận/giải phóng đơn có đồng thời vẫn là IShipperStore của Quy.
-public interface IShipperRepository
+public interface IDeliveryRepository
 {
-    Task AddAsync(Shipper shipper, CancellationToken ct = default);
+    Task<Delivery?> GetByOrderIdAsync(Guid orderId, CancellationToken cancellationToken = default);
+    Task AddAsync(Delivery delivery, CancellationToken cancellationToken = default);
+}
+
+public interface IShipperRepository : IShipperStore
+{
+    Task<Shipper?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task AddAsync(Shipper shipper, CancellationToken cancellationToken = default);
 }

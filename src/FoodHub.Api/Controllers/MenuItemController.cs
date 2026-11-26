@@ -17,7 +17,7 @@ public class MenuItemController(IMenuItemService menuItems) : ControllerBase
         Ok(await menuItems.GetPublicMenuAsync(restaurantId, ct));
 
     /// <summary>Lấy toàn bộ thực đơn của quán để chủ quán quản lý (bao gồm món tạm hết).</summary>
-    [Authorize(Roles = "Restaurant")]
+    [Authorize(Roles = "Restaurant,RestaurantOwner")]
     [HttpGet("all")]
     [ProducesResponseType(typeof(IReadOnlyList<MenuItemDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -27,7 +27,7 @@ public class MenuItemController(IMenuItemService menuItems) : ControllerBase
         Ok(await menuItems.GetOwnerMenuAsync(restaurantId, ct));
 
     /// <summary>Thêm món mới vào thực đơn của quán (chỉ chủ quán).</summary>
-    [Authorize(Roles = "Restaurant")]
+    [Authorize(Roles = "Restaurant,RestaurantOwner")]
     [HttpPost]
     [ProducesResponseType(typeof(MenuItemDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -41,7 +41,7 @@ public class MenuItemController(IMenuItemService menuItems) : ControllerBase
     }
 
     /// <summary>Cập nhật thông tin món ăn (chỉ chủ quán).</summary>
-    [Authorize(Roles = "Restaurant")]
+    [Authorize(Roles = "Restaurant,RestaurantOwner")]
     [HttpPut("{itemId:guid}")]
     [ProducesResponseType(typeof(MenuItemDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -52,7 +52,7 @@ public class MenuItemController(IMenuItemService menuItems) : ControllerBase
         Ok(await menuItems.UpdateAsync(restaurantId, itemId, request, ct));
 
     /// <summary>Bật hoặc tắt trạng thái còn bán của món ăn (chỉ chủ quán).</summary>
-    [Authorize(Roles = "Restaurant")]
+    [Authorize(Roles = "Restaurant,RestaurantOwner")]
     [HttpPatch("{itemId:guid}/availability")]
     [ProducesResponseType(typeof(MenuItemDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -62,7 +62,7 @@ public class MenuItemController(IMenuItemService menuItems) : ControllerBase
         Ok(await menuItems.SetAvailabilityAsync(restaurantId, itemId, request, ct));
 
     /// <summary>Xoá món ăn khỏi thực đơn (chỉ chủ quán).</summary>
-    [Authorize(Roles = "Restaurant")]
+    [Authorize(Roles = "Restaurant,RestaurantOwner")]
     [HttpDelete("{itemId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

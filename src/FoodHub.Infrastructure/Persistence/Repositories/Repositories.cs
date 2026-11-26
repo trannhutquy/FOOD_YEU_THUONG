@@ -65,6 +65,12 @@ public class MenuItemRepository(AppDbContext db) : IMenuItemRepository
         return await query.OrderBy(x => x.Name).ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<MenuItem>> GetByIdsAsync(IEnumerable<Guid> menuItemIds, CancellationToken ct = default)
+    {
+        var ids = menuItemIds.Distinct().ToList();
+        return await db.MenuItems.Where(x => ids.Contains(x.Id)).ToListAsync(ct);
+    }
+
     public async Task AddAsync(MenuItem item, CancellationToken ct = default) =>
         await db.MenuItems.AddAsync(item, ct);
 
@@ -72,31 +78,47 @@ public class MenuItemRepository(AppDbContext db) : IMenuItemRepository
         db.MenuItems.Remove(item);
 }
 
-public class VoucherRepository(AppDbContext db) : IVoucherRepository
+public class OrderRepository(AppDbContext db) : IOrderRepository
 {
-    public Task<Voucher?> GetByCodeAsync(string code, CancellationToken ct = default)
-    {
-        var normalized = code.Trim().ToUpperInvariant();
-        return db.Vouchers
-            .Include(x => x.Redemptions)
-            .FirstOrDefaultAsync(x => x.Code == normalized, ct);
-    }
+    public Task<Order?> GetByIdAsync(Guid orderId, CancellationToken cancellationToken = default) =>
+        db.Orders.FirstOrDefaultAsync(x => x.Id == orderId, cancellationToken);
 
-    public Task<bool> ExistsByCodeAsync(string code, CancellationToken ct = default)
-    {
-        var normalized = code.Trim().ToUpperInvariant();
-        return db.Vouchers.AnyAsync(x => x.Code == normalized, ct);
-    }
+    public async Task<IReadOnlyList<Order>> GetAvailableForDeliveryAsync(CancellationToken cancellationToken = default) =>
+        await db.Orders.Where(x => x.Status == OrderStatus.ReadyForPickup && x.ShipperId == null)
+            .OrderBy(x => x.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<Voucher>> GetAllAsync(CancellationToken ct = default) =>
-        await db.Vouchers.OrderByDescending(x => x.ExpiresAtUtc).ToListAsync(ct);
+    public async Task AddAsync(Order order, CancellationToken cancellationToken = default) =>
+        await db.Orders.AddAsync(order, cancellationToken);
+}
 
-    public async Task AddAsync(Voucher voucher, CancellationToken ct = default) =>
-        await db.Vouchers.AddAsync(voucher, ct);
+public class DeliveryRepository(AppDbContext db) : IDeliveryRepository
+{
+    public Task<Delivery?> GetByOrderIdAsync(Guid orderId, CancellationToken cancellationToken = default) =>
+        db.Deliveries.FirstOrDefaultAsync(x => x.OrderId == orderId, cancellationToken);
+
+    public async Task AddAsync(Delivery delivery, CancellationToken cancellationToken = default) =>
+        await db.Deliveries.AddAsync(delivery, cancellationToken);
 }
 
 public class ShipperRepository(AppDbContext db) : IShipperRepository
 {
+    public Task<Shipper?> GetByIdAsync(Guid shipperId, CancellationToken cancellationToken = default) =>
+        db.Shippers.FirstOrDefaultAsync(x => x.Id == shipperId, cancellationToken);
+
+    public async Task<IReadOnlyList<Shipper>> GetAvailableShippersAsync(CancellationToken cancellationToken = default) =>
+        await db.Shippers.Where(x => x.IsAvailable).ToListAsync(cancellationToken);
+
+    public Task SaveWithConcurrencyAsync(Shipper shipper, int expectedVersion, CancellationToken cancellationToken = default)
+    {
+        if (shipper.Version != expectedVersion)
+            throw new ConcurrencyException("Shipper concurrency conflict.");
+        return Task.CompletedTask;
+    }
+
+    public Task<Shipper?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        db.Shippers.FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+
     public async Task AddAsync(Shipper shipper, CancellationToken ct = default) =>
         await db.Shippers.AddAsync(shipper, ct);
 }

@@ -24,7 +24,7 @@ public class RestaurantController(IRestaurantService restaurants) : ControllerBa
         Ok(await restaurants.GetByIdAsync(id, ct));
 
     /// <summary>Tạo quán ăn mới thuộc quyền sở hữu của chủ quán hiện tại.</summary>
-    [Authorize(Roles = "Restaurant")]
+    [Authorize(Roles = "Restaurant,RestaurantOwner")]
     [HttpPost]
     [ProducesResponseType(typeof(RestaurantDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -37,7 +37,7 @@ public class RestaurantController(IRestaurantService restaurants) : ControllerBa
     }
 
     /// <summary>Cập nhật tên và trạng thái mở cửa của quán (chỉ chủ sở hữu).</summary>
-    [Authorize(Roles = "Restaurant")]
+    [Authorize(Roles = "Restaurant,RestaurantOwner")]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(RestaurantDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -48,7 +48,7 @@ public class RestaurantController(IRestaurantService restaurants) : ControllerBa
         Ok(await restaurants.UpdateAsync(id, request, ct));
 
     /// <summary>Mở hoặc đóng cửa quán ăn (chỉ chủ sở hữu).</summary>
-    [Authorize(Roles = "Restaurant")]
+    [Authorize(Roles = "Restaurant,RestaurantOwner")]
     [HttpPatch("{id:guid}/open")]
     [ProducesResponseType(typeof(RestaurantDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

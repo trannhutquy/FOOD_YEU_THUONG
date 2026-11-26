@@ -11,8 +11,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Restaurant> Restaurants => Set<Restaurant>();
     public DbSet<Shipper> Shippers => Set<Shipper>();
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
-    public DbSet<Voucher> Vouchers => Set<Voucher>();
-    public DbSet<VoucherRedemption> VoucherRedemptions => Set<VoucherRedemption>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<Delivery> Deliveries => Set<Delivery>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
@@ -28,4 +28,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             throw new ConcurrencyException($"Concurrency conflict while saving changes: {ex.Message}");
         }
     }
+
+    Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken, bool _)
+        => SaveChangesAsync(cancellationToken);
 }
