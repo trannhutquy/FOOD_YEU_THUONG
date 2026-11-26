@@ -31,7 +31,7 @@ public static class SampleAccounts
         Email: "admin@foodhub.com",
         RawPassword: "AdminPassword123!",
         PasswordHash: DefaultHash,
-        FullName: "Quản Trị Viên Hệ Thống",
+        FullName: "B",
         Role: UserRole.Admin,
         PhoneNumber: "0901000001",
         Description: "Tài khoản quản trị toàn quyền hệ thống");
@@ -41,7 +41,7 @@ public static class SampleAccounts
         Email: "owner.comtam@foodhub.com",
         RawPassword: "OwnerPassword123!",
         PasswordHash: DefaultHash,
-        FullName: "Chủ Quán Cơm Tấm Sen Hồng",
+        FullName: "lê Văn D",
         Role: UserRole.RestaurantOwner,
         PhoneNumber: "0901000002",
         Description: "Chủ quán Cơm Tấm Sen Hồng");
@@ -71,7 +71,7 @@ public static class SampleAccounts
         Email: "shipper.tocdo@foodhub.com",
         RawPassword: "ShipperPassword123!",
         PasswordHash: DefaultHash,
-        FullName: "Phạm Tốc Độ",
+        FullName: "phạm văn C",
         Role: UserRole.Shipper,
         PhoneNumber: "0901000005",
         Description: "Tài xế giao hàng dự phòng (Shipper 2)");
