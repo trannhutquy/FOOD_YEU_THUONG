@@ -41,7 +41,7 @@ Hệ thống cung cấp sẵn bộ tài khoản mẫu đầy đủ vai trò tron
 |---|---|---|---|---|
 | **Admin** | Quản Trị Viên Hệ Thống | `admin@foodhub.com` | `AdminPassword123!` | Toàn quyền quản trị hệ thống |
 | **RestaurantOwner** | Lê Văn Chủ Quán (Cơm Tấm) | `owner.comtam@foodhub.com` | `OwnerPassword123!` | Chủ quán *Cơm Tấm Sen Hồng* |
-| **RestaurantOwner** | Nguyễn Thị Chủ Quán (Bún Bò) | `owner.bunbo@foodhub.com` | `OwnerPassword123!` | Chủ quán *Bún Bò Huế Xưa* |
+| **RestaurantOwner** | nguyễn văn A | `owner.bunbo@foodhub.com` | `OwnerPassword123!` | Chủ quán *Bún Bò Huế Xưa* |
 | **Shipper** | Lê Văn Nhanh | `shipper.nhanh@foodhub.com` | `ShipperPassword123!` | Tài xế 1 (đang nhận 1 đơn giao) |
 | **Shipper** | Phạm Tốc Độ | `shipper.tocdo@foodhub.com` | `ShipperPassword123!` | Tài xế 2 (sẵn sàng nhận đơn) |
 | **Customer** | Lê Hà Hữu Thắng | `customer.thang@foodhub.com` | `CustomerPassword123!` | Khách hàng (Đã có đơn Delivered) |

@@ -51,7 +51,7 @@ public static class SampleAccounts
         Email: "owner.bunbo@foodhub.com",
         RawPassword: "OwnerPassword123!",
         PasswordHash: DefaultHash,
-        FullName: "Chủ Quán Bún Bò Huế Xưa",
+        FullName: "nguyễn văn A",
         Role: UserRole.RestaurantOwner,
         PhoneNumber: "0901000003",
         Description: "Chủ quán Bún Bò Huế Xưa");
