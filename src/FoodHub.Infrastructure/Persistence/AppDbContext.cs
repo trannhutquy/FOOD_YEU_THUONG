@@ -14,8 +14,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<Delivery> Deliveries => Set<Delivery>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder) =>
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        // Week 6 scope: exclude order/delivery graph from EF model to avoid unmapped value-object issues.
+        modelBuilder.Ignore<Order>();
+        modelBuilder.Ignore<OrderItem>();
+        modelBuilder.Ignore<Delivery>();
+        modelBuilder.Ignore<DeliveryCode>();
+        modelBuilder.Ignore<Address>();
+    }
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {

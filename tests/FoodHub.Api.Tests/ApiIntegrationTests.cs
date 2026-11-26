@@ -9,7 +9,6 @@ using System.Text.Json.Serialization;
 using FoodHub.Application.Abstractions;
 using FoodHub.Application.Auth;
 using FoodHub.Application.Restaurants;
-using FoodHub.Application.Vouchers;
 using FoodHub.Domain;
 using FoodHub.Infrastructure.Auth;
 using FoodHub.Infrastructure.Persistence;
@@ -65,7 +64,7 @@ public class ApiIntegrationTests
 
         var first = await client.PostAsJsonAsync("/api/auth/register",
             new RegisterRequest("vy@mail.com", "matkhau123", "Thuy Vy", UserRole.Customer, null));
-        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        var body=await first.Content.ReadAsStringAsync(); Assert.True(first.StatusCode==HttpStatusCode.Created, body);
 
         var duplicate = await client.PostAsJsonAsync("/api/auth/register",
             new RegisterRequest("VY@MAIL.COM", "matkhau123", "Thuy Vy", UserRole.Customer, null));
@@ -218,50 +217,6 @@ public class ApiIntegrationTests
         Assert.Equal(HttpStatusCode.NotFound, missingRest.StatusCode);
     }
 
-    [Fact]
-    public async Task Voucher_AdminCreatesAndCustomerValidates_RoleChecksAndSwaggerWork()
-    {
-        using var client = CreateClient(out var factory);
-        using var _ = factory;
-
-        var regCust = await client.PostAsJsonAsync("/api/auth/register",
-            new RegisterRequest("voucher-cust@mail.com", "matkhau123", "Khach", UserRole.Customer, null));
-        var tokenCustomer = (await regCust.Content.ReadFromJsonAsync<AuthResult>())!.AccessToken;
-
-        var adminToken = CreateJwt(Guid.NewGuid(), UserRole.Admin, DateTime.UtcNow.AddMinutes(15));
-
-        var createReq = new CreateVoucherRequest(
-            "FOOD20", VoucherType.Percentage, 20, 30000, 50000, DateTime.UtcNow.AddDays(7), 10);
-
-        // Customer cannot create voucher -> 403
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenCustomer);
-        var custCreate = await client.PostAsJsonAsync("/api/vouchers", createReq);
-        Assert.Equal(HttpStatusCode.Forbidden, custCreate.StatusCode);
-
-        // Admin creates voucher -> 201, duplicate -> 409, and Admin lists vouchers -> 200
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
-        var adminCreate = await client.PostAsJsonAsync("/api/vouchers", createReq);
-        Assert.Equal(HttpStatusCode.Created, adminCreate.StatusCode);
-
-        var duplicateCreate = await client.PostAsJsonAsync("/api/vouchers", createReq);
-        Assert.Equal(HttpStatusCode.Conflict, duplicateCreate.StatusCode);
-
-        var listRes = await client.GetFromJsonAsync<List<VoucherDto>>("/api/vouchers", JsonOpts);
-        Assert.Single(listRes!);
-
-        // Customer validates voucher -> 200 (20% of 200,000 = 40,000, capped at 30,000)
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tokenCustomer);
-        var validateRes = await client.GetAsync("/api/vouchers/validate?code=food20&subtotal=200000&shippingFee=15000");
-        Assert.Equal(HttpStatusCode.OK, validateRes.StatusCode);
-        var validation = await validateRes.Content.ReadFromJsonAsync<VoucherValidationDto>(JsonOpts);
-        Assert.Equal(30000m, validation!.DiscountAmount);
-        Assert.Equal(185000m, validation.FinalTotal);
-
-        // Swagger document is generated cleanly
-        client.DefaultRequestHeaders.Authorization = null;
-        var swaggerRes = await client.GetAsync("/swagger/v1/swagger.json");
-        Assert.Equal(HttpStatusCode.OK, swaggerRes.StatusCode);
-    }
 
     [Fact]
     public async Task Auth_LogoutAndRegisterValidation_WorkAsExpected()

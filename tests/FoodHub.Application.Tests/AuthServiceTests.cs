@@ -202,6 +202,7 @@ public class AuthServiceTests
     {
         public int SaveCount { get; private set; }
         public Task<int> SaveChangesAsync(CancellationToken ct = default) { SaveCount++; return Task.FromResult(1); }
+        Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken, bool _) { SaveCount++; return Task.CompletedTask; }
     }
 
     private sealed class FakeHasher : IPasswordHasher
@@ -249,6 +250,14 @@ public class AuthServiceTests
     private sealed class FakeShipperRepository : IShipperRepository
     {
         public List<Shipper> Items { get; } = new();
+        public Task<Shipper?> GetByIdAsync(Guid shipperId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Items.FirstOrDefault(x => x.Id == shipperId));
+        public Task<IReadOnlyList<Shipper>> GetAvailableShippersAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Shipper>>(Items.Where(x => x.IsAvailable).ToList());
+        public Task SaveWithConcurrencyAsync(Shipper shipper, int expectedVersion, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+        public Task<Shipper?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Items.FirstOrDefault(x => x.UserId == userId));
         public Task AddAsync(Shipper shipper, CancellationToken ct = default) { Items.Add(shipper); return Task.CompletedTask; }
     }
 

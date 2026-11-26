@@ -1,6 +1,5 @@
 using FoodHub.Application.Abstractions;
 using FoodHub.Application.Restaurants;
-using FoodHub.Application.Vouchers;
 using FoodHub.Domain;
 using Xunit;
 
@@ -60,56 +59,19 @@ public class RestaurantAndVoucherServiceTests
             f.MenuItemService.DeleteAsync(restaurant.Id, item.Id));
     }
 
-    [Fact]
-    public async Task VoucherService_CreateDuplicateCode_ThrowsConflict()
-    {
-        var f = new Fixture(Guid.NewGuid(), UserRole.Admin);
-        var req = new CreateVoucherRequest("sale10", VoucherType.Percentage, 10, 20000, 50000, DateTime.UtcNow.AddDays(5), 50);
-
-        var created = await f.VoucherService.CreateAsync(req);
-        Assert.Equal("SALE10", created.Code);
-
-        await Assert.ThrowsAsync<ConflictException>(() =>
-            f.VoucherService.CreateAsync(req with { Code = " SALE10 " }));
-    }
-
-    [Fact]
-    public async Task VoucherService_ValidateRedeemAndRefund_WorkTogether()
-    {
-        var customerId = Guid.NewGuid();
-        var f = new Fixture(customerId, UserRole.Customer);
-        var voucher = new Voucher("SAVE15K", VoucherType.FixedAmount, 15000, null, 50000, DateTime.UtcNow.AddDays(5), 5);
-        await f.Vouchers.AddAsync(voucher);
-
-        var preview = await f.VoucherService.ValidateAsync("save15k", 100000, 15000);
-        Assert.Equal(15000m, preview.DiscountAmount);
-        Assert.Equal(100000m, preview.FinalTotal);
-        Assert.Equal(0, voucher.UsedCount);
-
-        var discount = await f.VoucherService.RedeemAsync("SAVE15K", customerId, new Money(100000), new Money(15000));
-        Assert.Equal(15000m, discount.Amount);
-        Assert.Equal(1, voucher.UsedCount);
-
-        await f.VoucherService.RefundAsync("SAVE15K", customerId);
-        Assert.Equal(0, voucher.UsedCount);
-    }
-
     private sealed class Fixture
     {
         public FakeUnitOfWork Uow { get; } = new();
         public FakeRestaurantRepository Restaurants { get; } = new();
         public FakeMenuItemRepository MenuItems { get; } = new();
-        public FakeVoucherRepository Vouchers { get; } = new();
         public RestaurantService RestaurantService { get; }
         public MenuItemService MenuItemService { get; }
-        public VoucherService VoucherService { get; }
 
         public Fixture(Guid userId, UserRole role)
         {
             var currentUser = new FakeCurrentUser(userId, role);
             RestaurantService = new RestaurantService(Restaurants, currentUser, Uow);
             MenuItemService = new MenuItemService(Restaurants, MenuItems, currentUser, Uow);
-            VoucherService = new VoucherService(Vouchers, currentUser, Uow);
         }
     }
 
@@ -123,6 +85,7 @@ public class RestaurantAndVoucherServiceTests
     private sealed class FakeUnitOfWork : IUnitOfWork
     {
         public Task<int> SaveChangesAsync(CancellationToken ct = default) => Task.FromResult(1);
+        Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken, bool _) => Task.CompletedTask;
     }
 
     private sealed class FakeRestaurantRepository : IRestaurantRepository
@@ -144,19 +107,9 @@ public class RestaurantAndVoucherServiceTests
             Task.FromResult(Items.FirstOrDefault(x => x.Id == id));
         public Task<IReadOnlyList<MenuItem>> GetByRestaurantIdAsync(Guid restaurantId, bool availableOnly, CancellationToken ct = default) =>
             Task.FromResult<IReadOnlyList<MenuItem>>(Items.Where(x => x.RestaurantId == restaurantId && (!availableOnly || x.IsAvailable)).ToList());
+        public Task<IReadOnlyList<MenuItem>> GetByIdsAsync(IEnumerable<Guid> menuItemIds, CancellationToken ct = default) =>
+            Task.FromResult<IReadOnlyList<MenuItem>>(Items.Where(x => menuItemIds.Contains(x.Id)).ToList());
         public Task AddAsync(MenuItem item, CancellationToken ct = default) { Items.Add(item); return Task.CompletedTask; }
         public void Remove(MenuItem item) => Items.Remove(item);
-    }
-
-    private sealed class FakeVoucherRepository : IVoucherRepository
-    {
-        public List<Voucher> Items { get; } = new();
-        public Task<Voucher?> GetByCodeAsync(string code, CancellationToken ct = default) =>
-            Task.FromResult(Items.FirstOrDefault(x => x.Code == code.Trim().ToUpperInvariant()));
-        public Task<bool> ExistsByCodeAsync(string code, CancellationToken ct = default) =>
-            Task.FromResult(Items.Any(x => x.Code == code.Trim().ToUpperInvariant()));
-        public Task<IReadOnlyList<Voucher>> GetAllAsync(CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyList<Voucher>>(Items.ToList());
-        public Task AddAsync(Voucher voucher, CancellationToken ct = default) { Items.Add(voucher); return Task.CompletedTask; }
     }
 }

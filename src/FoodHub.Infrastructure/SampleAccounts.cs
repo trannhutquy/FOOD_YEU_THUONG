@@ -32,7 +32,7 @@ public static class SampleAccounts
         RawPassword: "AdminPassword123!",
         PasswordHash: DefaultHash,
         FullName: "admin",
-        Role: UserRole.Admin,
+        Role: UserRoles.Admin,
         PhoneNumber: "0901000001",
         Description: "Tài khoản quản trị toàn quyền hệ thống");
 
@@ -42,7 +42,7 @@ public static class SampleAccounts
         RawPassword: "OwnerPassword123!",
         PasswordHash: DefaultHash,
         FullName: "lê Văn D",
-        Role: UserRole.RestaurantOwner,
+        Role: UserRoles.RestaurantOwner,
         PhoneNumber: "0901000002",
         Description: "Chủ quán Cơm Tấm Sen Hồng");
 
@@ -52,7 +52,7 @@ public static class SampleAccounts
         RawPassword: "OwnerPassword123!",
         PasswordHash: DefaultHash,
         FullName: "nguyễn văn A",
-        Role: UserRole.RestaurantOwner,
+        Role: UserRoles.RestaurantOwner,
         PhoneNumber: "0901000003",
         Description: "Chủ quán Bún Bò Huế Xưa");
 
@@ -62,7 +62,7 @@ public static class SampleAccounts
         RawPassword: "ShipperPassword123!",
         PasswordHash: DefaultHash,
         FullName: "Lê Văn Nhanh",
-        Role: UserRole.Shipper,
+        Role: UserRoles.Shipper,
         PhoneNumber: "0901000004",
         Description: "Tài xế giao hàng tích cực (Shipper 1)");
 
@@ -72,7 +72,7 @@ public static class SampleAccounts
         RawPassword: "ShipperPassword123!",
         PasswordHash: DefaultHash,
         FullName: "phạm văn C",
-        Role: UserRole.Shipper,
+        Role: UserRoles.Shipper,
         PhoneNumber: "0901000005",
         Description: "Tài xế giao hàng dự phòng (Shipper 2)");
 
@@ -82,7 +82,7 @@ public static class SampleAccounts
         RawPassword: "CustomerPassword123!",
         PasswordHash: DefaultHash,
         FullName: "Lê Hà Hữu Thắng",
-        Role: UserRole.Customer,
+        Role: UserRoles.Customer,
         PhoneNumber: "0901000006",
         Description: "Khách hàng thân thiết (Trưởng nhóm Thắng)");
 
@@ -92,7 +92,7 @@ public static class SampleAccounts
         RawPassword: "CustomerPassword123!",
         PasswordHash: DefaultHash,
         FullName: "Nguyễn Thuý Vy",
-        Role: UserRole.Customer,
+        Role: UserRoles.Customer,
         PhoneNumber: "0901000007",
         Description: "Khách hàng đặt món (Phó nhóm Vy)");
 
@@ -102,7 +102,7 @@ public static class SampleAccounts
         RawPassword: "CustomerPassword123!",
         PasswordHash: DefaultHash,
         FullName: "Trần Nhựt Quy",
-        Role: UserRole.Customer,
+        Role: UserRoles.Customer,
         PhoneNumber: "0901000008",
         Description: "Khách hàng đặt món (Thành viên Quy)");
 
