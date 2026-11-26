@@ -12,5 +12,11 @@ public readonly record struct Money
 
     public static Money Zero => new(0);
     public static Money operator +(Money a, Money b) => new(a.Amount + b.Amount);
+    public static Money operator -(Money a, Money b) => new(a.Amount - b.Amount);
     public static Money operator *(Money a, int quantity) => new(a.Amount * quantity);
+    public static bool operator <(Money a, Money b) => a.Amount < b.Amount;
+    public static bool operator >(Money a, Money b) => a.Amount > b.Amount;
+    public static bool operator <=(Money a, Money b) => a.Amount <= b.Amount;
+    public static bool operator >=(Money a, Money b) => a.Amount >= b.Amount;
+    public static Money Min(Money a, Money b) => a <= b ? a : b;
 }

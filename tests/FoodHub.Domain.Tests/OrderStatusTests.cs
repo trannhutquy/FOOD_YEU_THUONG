@@ -31,12 +31,23 @@ public class OrderStatusTests
     }
 
     [Fact]
-    public void Reject_FromPending_SetsRejected()
+    public void Reject_FromPending_SetsRejectedAndStoresReason()
     {
         var order = NewOrderWithItem();
-        order.Reject();
+        order.Reject("Out of ingredients");
 
         Assert.Equal(OrderStatus.Rejected, order.Status);
+        Assert.Equal("Out of ingredients", order.RejectionReason);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Reject_WithoutReason_Throws(string reason)
+    {
+        var order = NewOrderWithItem();
+
+        Assert.Throws<DomainException>(() => order.Reject(reason));
     }
 
     [Fact]
