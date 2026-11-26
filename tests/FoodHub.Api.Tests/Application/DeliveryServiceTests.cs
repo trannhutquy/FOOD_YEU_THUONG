@@ -43,7 +43,7 @@ public class DeliveryServiceTests
         var pickupStatus = await harness.DeliveryService.PickUpOrderAsync(shipperUserId, orderId);
         Assert.Equal(OrderStatus.Delivering, pickupStatus.OrderStatus);
 
-        var customerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, RoleNames.Customer, orderId);
+        var customerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, UserRole.Customer, orderId);
         var code = customerOrder.DeliveryConfirmationCode!;
 
         var delivered = await harness.DeliveryService.ConfirmDeliveryAsync(
@@ -64,7 +64,7 @@ public class DeliveryServiceTests
         var (harness, ownerId, customerId, shipperUserId, orderId) = await SetupReadyOrderAsync();
         await harness.DeliveryService.PickUpOrderAsync(shipperUserId, orderId);
 
-        var customerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, RoleNames.Customer, orderId);
+        var customerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, UserRole.Customer, orderId);
         var wrongCode = customerOrder.DeliveryConfirmationCode == "000000" ? "999999" : "000000";
 
         var savesBefore = harness.Store.SaveCount;
@@ -76,11 +76,11 @@ public class DeliveryServiceTests
 
         Assert.Equal(savesBefore + DeliveryCode.MaxFailedAttempts, harness.Store.SaveCount);
 
-        var regenerated = await harness.DeliveryService.RegenerateCodeAsync(ownerId, RoleNames.Restaurant, orderId);
+        var regenerated = await harness.DeliveryService.RegenerateCodeAsync(ownerId, UserRole.RestaurantOwner, orderId);
         Assert.False(regenerated.IsCodeLocked);
         Assert.Equal(0, regenerated.CodeFailedAttempts);
 
-        var refreshedCustomerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, RoleNames.Customer, orderId);
+        var refreshedCustomerOrder = await harness.OrderService.GetOrderByIdAsync(customerId, UserRole.Customer, orderId);
         var delivered = await harness.DeliveryService.ConfirmDeliveryAsync(
             shipperUserId,
             orderId,

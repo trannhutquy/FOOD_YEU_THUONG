@@ -146,9 +146,9 @@ public class OrderServiceTests
         await harness.OrderService.MarkReadyAsync(ownerId, created.Id);
         await harness.DeliveryService.PickUpOrderAsync(shipperUserId, created.Id);
 
-        var customerView = await harness.OrderService.GetOrderByIdAsync(customerId, RoleNames.Customer, created.Id);
-        var shipperView = await harness.OrderService.GetOrderByIdAsync(shipperUserId, RoleNames.Shipper, created.Id);
-        var ownerView = await harness.OrderService.GetOrderByIdAsync(ownerId, RoleNames.Restaurant, created.Id);
+        var customerView = await harness.OrderService.GetOrderByIdAsync(customerId, UserRole.Customer, created.Id);
+        var shipperView = await harness.OrderService.GetOrderByIdAsync(shipperUserId, UserRole.Shipper, created.Id);
+        var ownerView = await harness.OrderService.GetOrderByIdAsync(ownerId, UserRole.RestaurantOwner, created.Id);
 
         Assert.NotNull(customerView.DeliveryConfirmationCode);
         Assert.Equal(6, customerView.DeliveryConfirmationCode!.Length);
@@ -156,6 +156,6 @@ public class OrderServiceTests
         Assert.Null(ownerView.DeliveryConfirmationCode);
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
-            harness.OrderService.GetOrderByIdAsync(Guid.NewGuid(), RoleNames.Customer, created.Id));
+            harness.OrderService.GetOrderByIdAsync(Guid.NewGuid(), UserRole.Customer, created.Id));
     }
 }

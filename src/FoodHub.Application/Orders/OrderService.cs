@@ -104,7 +104,7 @@ public class OrderService
         await EnsureCanViewOrderAsync(actorUserId, actorRole, order, cancellationToken);
 
         string? deliveryCode = null;
-        if (actorRole == RoleNames.Customer &&
+        if (actorRole == UserRole.Customer &&
             order.CustomerId == actorUserId &&
             order.Status == OrderStatus.Delivering)
         {
@@ -218,20 +218,20 @@ public class OrderService
         Order order,
         CancellationToken cancellationToken)
     {
-        if (actorRole == RoleNames.Admin)
+        if (actorRole == UserRole.Admin)
             return;
 
-        if (actorRole == RoleNames.Customer && order.CustomerId == actorUserId)
+        if (actorRole == UserRole.Customer && order.CustomerId == actorUserId)
             return;
 
-        if (actorRole == RoleNames.Restaurant)
+        if (actorRole == UserRole.RestaurantOwner)
         {
             var restaurant = await _restaurantRepository.GetByIdAsync(order.RestaurantId, cancellationToken);
             if (restaurant is not null && restaurant.OwnerUserId == actorUserId)
                 return;
         }
 
-        if (actorRole == RoleNames.Shipper)
+        if (actorRole == UserRole.Shipper)
         {
             var shipper = await _shipperRepository.GetByUserIdAsync(actorUserId, cancellationToken);
             if (shipper is not null && order.ShipperId == shipper.Id)

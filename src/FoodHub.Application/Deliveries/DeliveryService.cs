@@ -154,9 +154,9 @@ public class DeliveryService
     {
         var order = await GetOrderOrThrowAsync(orderId, cancellationToken);
 
-        if (actorRole != RoleNames.Admin)
+        if (actorRole != UserRole.Admin)
         {
-            if (actorRole != RoleNames.Restaurant)
+            if (actorRole != UserRole.RestaurantOwner)
                 throw new ForbiddenException("Only restaurant owners or admins can regenerate a delivery code.");
 
             var restaurant = await _restaurantRepository.GetByIdAsync(order.RestaurantId, cancellationToken)
