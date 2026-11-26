@@ -16,5 +16,17 @@ public class OrderItem
         Quantity = quantity;
     }
 
-    public void IncreaseQuantity(int quantity) => Quantity += quantity;
+    public void IncreaseQuantity(int quantity)
+    {
+        if (quantity <= 0)
+            throw new DomainException("Quantity must be greater than zero.");
+        Quantity += quantity;
+    }
+
+    public void SetQuantity(int quantity)
+    {
+        if (quantity <= 0)
+            throw new DomainException("Quantity must be greater than zero.");
+        Quantity = quantity;
+    }
 }
